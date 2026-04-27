@@ -1,7 +1,7 @@
 ---
 title: "Patient Outcome Analysis: Heart Disease Factors"
 author: "Jacob Doh"
-output: html_document
+output: github_document
 ---
 
 ## Executive Summary
