@@ -1,0 +1,76 @@
+---
+title: "Patient Outcome Analysis: Heart Disease Factors"
+author: "Jacob Doh"
+output: html_document
+---
+
+## Executive Summary
+
+This project analyzes the full heart transplant wait-list data set (172 patients) from the Machine Learning Repository. We explore clinical indicators such as age and monitoring duration to understand patient outcomes, demonstrating a data-driven approach to Healthcare IT.
+
+```{r}
+# Load necessary libraries 
+library(tidyverse)
+library(ggplot2)
+
+# Contains professional "Heart" data set
+data(heart, package = "survival")
+
+# Data cleaning
+heart_clean <- heart %>%
+  mutate(Age = round(age + 48), # correcting to actual age
+    Status = factor(event, levels = c(0, 1), labels = c("Stable", "Outcome")), # labeling clinical outcomes
+    Monitoring_Days = as.integer(stop - start),  # calculating total observation period
+    Transplant = factor(transplant, levels = c(0, 1), labels = c("No", "Yes"))) %>% # labeling transplant status
+  select(Age, Status, Monitoring_Days, Transplant)
+heart_clean
+
+# Verify cleaned data and count
+heart_count <- nrow(heart_clean) # counting 172
+heart_count
+```
+
+## Exploratory Data Analysis
+
+### Age Distribution of Heart Patients
+
+This histogram shows the age range of the 172 patients on the transplant wait-list. It helps us understand which age group is most affected.
+
+```{r}
+# creating plot 
+ggplot(heart_clean, aes(x = Age)) +
+  geom_histogram(binwidth = 5, fill = "#3498db", color = "white") +
+  labs(title = "Patient Age Distribution", x = "Age (Years)", y = "Patient Count") +
+  theme_minimal()
+```
+
+**Insights:**
+
+-   Main Observation: we observed that the heart transplant wait-list is not evenly distributed across all ages. The data shows a clear "bell shape" that peaks between the ages of 45 and 55.
+
+-   Analysis: This suggests that middle-aged patients are the primary group requiring heart transplants in this data set. we found an interesting thing that there are very few patients under 30 or over 65, which might mean that heart issues in this group typically arise during middle age.
+
+-   Application: In health care systems, this information could be used to prioritize screening resources for patients entering their 40s.
+
+### Monitoring Duration vs Clinical Status
+
+We analyze if there's a pattern between how long a patient was monitored and their final clinical status.
+
+```{r}
+# creating plot 
+ggplot(heart_clean, aes(x = Age, y = Monitoring_Days, color = Status)) +
+  geom_point(size = 3, alpha = 0.6) +
+  scale_color_manual(values = c("#2ecc71", "#e74c3c")) +
+  labs(title = "Age vs. Monitoring Duration",
+       x = "Patient Age", y = "Days of Observation",
+       color = "Final Status") +
+  theme_light()
+```
+
+**Insights:**
+
+-   Main Observation: Looking at the scatter plot, we noticed that a lot of "Outcomes" (red dots) happen very early—within the first 200 days of monitoring.
+
+-   Analysis: It seems the first few months are the most critical for any age group. Age itself didn't seem to guarantee a longer or shorter monitoring period, but staying stable in the beginning is the key to long-term survival.
+
+-   Application: This data tells me that hospital systems should trigger "high-alert" notifications for new patients during their first 6 months on the wait-list to improve overall outcomes.
