@@ -1,6 +1,5 @@
 ---
 title: "Patient Outcome Analysis: Heart Disease Factors"
-author: "Jacob Doh"
 output: github_document
 ---
 

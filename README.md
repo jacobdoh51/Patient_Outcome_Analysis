@@ -1,6 +1,5 @@
 Patient Outcome Analysis: Heart Disease Factors
 ================
-Jacob Doh
 
 ## Executive Summary
 
