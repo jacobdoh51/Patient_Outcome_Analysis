@@ -1,36 +1,52 @@
-Patient Outcome Analysis: Heart Disease Factors
+Patient Outcome Analysis: Heart Transplant Wait-List Data
 ================
 
 ## Executive Summary
 
 This project analyzes the full heart transplant wait-list data set (172
-patients) from the Machine Learning Repository. We explore clinical
-indicators such as age and monitoring duration to understand patient
-outcomes, demonstrating a data-driven approach to Healthcare IT.
+patients) from the R `survival` package. We explore clinical indicators
+such as age, transplant status, and monitoring duration to understand
+patient outcomes. The goal is to demonstrate a basic Healthcare IT
+analytics workflow using R.
+
+------------------------------------------------------------------------
+
+## Tools Used
+
+- R
+- tidyverse
+- ggplot2
+- survival package
+- Logistic regression
+
+------------------------------------------------------------------------
+
+## Dataset Description
+
+The dataset comes from the R `survival` package which contains survival
+data for patients on the waiting list for the Stanford heart transplant
+program.
+
+For this project, we focused on these variables:
+
+- `Age`: patient age in years
+- `Status`: final clinical status, labeled as `Stable` or `Outcome`
+- `Monitoring_Days`: number of days observed in the dataset
+- `Transplant`: whether the patient received a transplant
+
+------------------------------------------------------------------------
+
+## Data Loading and Cleaning
 
 ``` r
-# Load necessary libraries 
+# load libraries 
 library(tidyverse)
-```
-
-    ## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-    ## ✔ dplyr     1.2.1     ✔ readr     2.2.0
-    ## ✔ forcats   1.0.1     ✔ stringr   1.6.0
-    ## ✔ ggplot2   4.0.3     ✔ tibble    3.3.1
-    ## ✔ lubridate 1.9.5     ✔ tidyr     1.3.2
-    ## ✔ purrr     1.2.2     
-    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    ## ✖ dplyr::filter() masks stats::filter()
-    ## ✖ dplyr::lag()    masks stats::lag()
-    ## ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
-
-``` r
 library(ggplot2)
 
-# Contains professional "Heart" data set
+# contains professional "Heart" data set
 data(heart, package = "survival")
 
-# Data cleaning
+# data cleaning
 heart_clean <- heart %>%
   mutate(Age = round(age + 48), # correcting to actual age
     Status = factor(event, levels = c(0, 1), labels = c("Stable", "Outcome")), # labeling clinical outcomes
@@ -215,19 +231,54 @@ heart_clean
     ## 172  39 Outcome               6         No
 
 ``` r
-# Verify cleaned data and count
+# verify cleaned data and count
 heart_count <- nrow(heart_clean) # counting 172
 heart_count
 ```
 
     ## [1] 172
 
+The original `Age` variable is stored as age minus 48 in the processed
+dataset, we added 48 back to make the age easier to understand. We also
+changed the numeric outcome and transplant variables into readable
+labels.
+
+------------------------------------------------------------------------
+
+## Summary of Patient Data
+
+``` r
+# summary table
+summary_table <- heart_clean %>%
+  summarize(
+    Total_Patients = n(),
+    Average_Age = round(mean(Age), 1),  
+    Median_Age = median(Age), 
+    Average_Monitoring_Days = round(mean(Monitoring_Days), 1),
+    Median_Monitoring_Days = median(Monitoring_Days),
+    Stable_Count = sum(Status == "Stable"),
+    Outcome_Count = sum(Status == "Outcome"),
+    Transplant_Count = sum(Transplant == "Yes"),
+    No_Transplant_Count = sum(Transplant == "No"))
+summary_table
+```
+
+    ##   Total_Patients Average_Age Median_Age Average_Monitoring_Days
+    ## 1            172        45.5         48                   185.8
+    ##   Median_Monitoring_Days Stable_Count Outcome_Count Transplant_Count
+    ## 1                   38.5           97            75               69
+    ##   No_Transplant_Count
+    ## 1                 103
+
+This summary table gives a quick overview of the patient group. It shows
+the number of patients, age range, average monitoring duration, outcome
+count, and transplant count.
+
+------------------------------------------------------------------------
+
 ## Exploratory Data Analysis
 
 ### Age Distribution of Heart Patients
-
-This histogram shows the age range of the 172 patients on the transplant
-wait-list. It helps us understand which age group is most affected.
 
 ``` r
 # creating plot 
@@ -239,30 +290,117 @@ ggplot(heart_clean, aes(x = Age)) +
 
 ![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
-**Insights:**
+The histogram shows that many patients in this dataset were middle-aged.
+This helps describe the patient group, but it should not be used to make
+broad medical conclusions because this dataset is small and specific to
+one heart transplant program.
 
-- Main Observation: we observed that the heart transplant wait-list is
-  not evenly distributed across all ages. The data shows a clear “bell
-  shape” that peaks between the ages of 45 and 55.
+------------------------------------------------------------------------
 
-- Analysis: This suggests that middle-aged patients are the primary
-  group requiring heart transplants in this data set. we found an
-  interesting thing that there are very few patients under 30 or over
-  65, which might mean that heart issues in this group typically arise
-  during middle age.
+### Clinical Outcome by Transplant Status
 
-- Application: In health care systems, this information could be used to
-  prioritize screening resources for patients entering their 40s.
+``` r
+# outcome by transplant
+outcome_by_transplant <- heart_clean %>%
+  group_by(Transplant, Status) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  group_by(Transplant) %>%
+  mutate(Percent = round(Count / sum(Count) * 100, 1))
+outcome_by_transplant
+```
+
+    ## # A tibble: 4 × 4
+    ## # Groups:   Transplant [2]
+    ##   Transplant Status  Count Percent
+    ##   <fct>      <fct>   <int>   <dbl>
+    ## 1 No         Stable     73    70.9
+    ## 2 No         Outcome    30    29.1
+    ## 3 Yes        Stable     24    34.8
+    ## 4 Yes        Outcome    45    65.2
+
+``` r
+# creating plot
+ggplot(outcome_by_transplant, aes(x = Transplant, y = Percent, fill = Status)) +
+  geom_col(position = "dodge") +
+  labs(title = "Clinical Outcome by Transplant Status",
+       x = "Received Transplant", y = "Percent of Patients", fill = "Final Status") +
+  theme_minimal()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+This chart compares patient outcomes based on whether the patient
+received a transplant. This is useful for finding patterns in the data.
+However, this is observational data, so the result shows association
+only. It does not prove that transplant status directly caused the
+outcome.
+
+------------------------------------------------------------------------
+
+### Clinical Outcome by Age Group
+
+``` r
+# grouping age
+heart_clean <- heart_clean %>%
+  mutate(
+    Age_Group = case_when(
+      Age < 30 ~ "Under 30",
+      Age >= 30 & Age < 40 ~ "30s",
+      Age >= 40 & Age < 50 ~ "40s",
+      Age >= 50 & Age < 60 ~ "50s",
+      Age >= 60 ~ "60+"),
+    Age_Group = factor(
+      Age_Group,
+      levels = c("Under 30", "30s", "40s", "50s", "60+")))
+
+# outcome clean
+age_outcome <- heart_clean %>%
+  group_by(Age_Group, Status) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  group_by(Age_Group) %>%
+  mutate(Percent = round(Count / sum(Count) * 100, 1))
+age_outcome
+```
+
+    ## # A tibble: 10 × 4
+    ## # Groups:   Age_Group [5]
+    ##    Age_Group Status  Count Percent
+    ##    <fct>     <fct>   <int>   <dbl>
+    ##  1 Under 30  Stable     11    68.8
+    ##  2 Under 30  Outcome     5    31.2
+    ##  3 30s       Stable     12    70.6
+    ##  4 30s       Outcome     5    29.4
+    ##  5 40s       Stable     47    58.8
+    ##  6 40s       Outcome    33    41.2
+    ##  7 50s       Stable     25    45.5
+    ##  8 50s       Outcome    30    54.5
+    ##  9 60+       Stable      2    50  
+    ## 10 60+       Outcome     2    50
+
+``` r
+# creating plot
+ggplot(age_outcome, aes(x = Age_Group, y = Percent, fill = Status)) +
+  geom_col(position = "dodge") +
+  labs(title = "Clinical Outcome by Age Group",
+       x = "Age Group", y = "Percent of Patients", fill = "Final Status") +
+  theme_minimal()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+This chart compares clinical outcomes across different age groups. It
+gives a clearer view than the age histogram alone because it connects
+age groups with final patient status. Some age groups may have small
+sample sizes, so the result should be interpreted carefully.
+
+------------------------------------------------------------------------
 
 ### Monitoring Duration vs Clinical Status
-
-We analyze if there’s a pattern between how long a patient was monitored
-and their final clinical status.
 
 ``` r
 # creating plot 
 ggplot(heart_clean, aes(x = Age, y = Monitoring_Days, color = Status)) +
-  geom_point(size = 3, alpha = 0.6) +
+  geom_point(size = 3, alpha = 0.7) +
   scale_color_manual(values = c("#2ecc71", "#e74c3c")) +
   labs(title = "Age vs. Monitoring Duration",
        x = "Patient Age", y = "Days of Observation",
@@ -270,19 +408,210 @@ ggplot(heart_clean, aes(x = Age, y = Monitoring_Days, color = Status)) +
   theme_light()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
-**Insights:**
+This scatter plot shows the relationship between patient age, monitoring
+duration, and final clinical status. It helps identify whether outcomes
+are more common in shorter or longer observation periods.
 
-- Main Observation: Looking at the scatter plot, we noticed that a lot
-  of “Outcomes” (red dots) happen very early—within the first 200 days
-  of monitoring.
+------------------------------------------------------------------------
 
-- Analysis: It seems the first few months are the most critical for any
-  age group. Age itself didn’t seem to guarantee a longer or shorter
-  monitoring period, but staying stable in the beginning is the key to
-  long-term survival.
+### Clinical Outcome by Monitoring Period
 
-- Application: This data tells me that hospital systems should trigger
-  “high-alert” notifications for new patients during their first 6
-  months on the wait-list to improve overall outcomes.
+``` r
+# group days
+heart_clean <- heart_clean %>%
+  mutate(
+    Monitoring_Group = case_when(
+      Monitoring_Days <= 30 ~ "0-30 days",
+      Monitoring_Days > 30 & Monitoring_Days <= 180 ~ "31-180 days",
+      Monitoring_Days > 180 & Monitoring_Days <= 365 ~ "181-365 days",
+      Monitoring_Days > 365 ~ "Over 365 days"),
+    Monitoring_Group = factor(
+      Monitoring_Group,
+      levels = c("0-30 days", "31-180 days", "181-365 days", "Over 365 days")))
+
+# outcome clean
+monitoring_outcome <- heart_clean %>%
+  group_by(Monitoring_Group, Status) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  group_by(Monitoring_Group) %>%
+  mutate(Percent = round(Count / sum(Count) * 100, 1))
+monitoring_outcome
+```
+
+    ## # A tibble: 8 × 4
+    ## # Groups:   Monitoring_Group [4]
+    ##   Monitoring_Group Status  Count Percent
+    ##   <fct>            <fct>   <int>   <dbl>
+    ## 1 0-30 days        Stable     43    60.6
+    ## 2 0-30 days        Outcome    28    39.4
+    ## 3 31-180 days      Stable     31    49.2
+    ## 4 31-180 days      Outcome    32    50.8
+    ## 5 181-365 days     Stable      5    41.7
+    ## 6 181-365 days     Outcome     7    58.3
+    ## 7 Over 365 days    Stable     18    69.2
+    ## 8 Over 365 days    Outcome     8    30.8
+
+``` r
+# creating plot
+ggplot(monitoring_outcome, aes(x = Monitoring_Group, y = Percent, fill = Status)) +
+  geom_col(position = "dodge") +
+  labs(title = "Clinical Outcome by Monitoring Period",
+       x = "Monitoring Period", y = "Percent of Patients", fill = "Final Status") +
+  theme_minimal()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+This chart compares patient outcomes by monitoring period. It gives a
+grouped view of the same idea shown in the scatter plot.
+
+------------------------------------------------------------------------
+
+## Best Predictive Model
+
+A logistic regression model was used to estimate the probability of a
+clinical outcome. The predictors were age, monitoring duration, and
+transplant status. This model is not intended for medical
+decision-making. It is only used to demonstrate a basic Healthcare IT
+analytics workflow.
+
+``` r
+# prepare model
+heart_model <- heart_clean %>%
+  mutate(
+    Outcome_Binary = ifelse(Status == "Outcome", 1, 0),
+    Transplant_Binary = ifelse(Transplant == "Yes", 1, 0))
+
+# set upt model 
+logistic_model <- glm(Outcome_Binary ~ Age + Monitoring_Days + Transplant_Binary,
+                      data = heart_model, family = binomial)
+# summary
+summary(logistic_model)
+```
+
+    ## 
+    ## Call:
+    ## glm(formula = Outcome_Binary ~ Age + Monitoring_Days + Transplant_Binary, 
+    ##     family = binomial, data = heart_model)
+    ## 
+    ## Coefficients:
+    ##                     Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)       -1.6150000  0.9203534  -1.755  0.07930 .  
+    ## Age                0.0181433  0.0193360   0.938  0.34808    
+    ## Monitoring_Days   -0.0021753  0.0006647  -3.272  0.00107 ** 
+    ## Transplant_Binary  2.2903470  0.4279318   5.352 8.69e-08 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 235.62  on 171  degrees of freedom
+    ## Residual deviance: 197.81  on 168  degrees of freedom
+    ## AIC: 205.81
+    ## 
+    ## Number of Fisher Scoring iterations: 4
+
+### Model Prediction
+
+``` r
+# prediction 
+heart_model <- heart_model %>%
+  mutate(
+    Predicted_Probability = predict(logistic_model, type = "response"),
+    Predicted_Status = ifelse(Predicted_Probability > 0.5, "Outcome", "Stable"))
+head(heart_model)
+```
+
+    ##   Age  Status Monitoring_Days Transplant Age_Group Monitoring_Group
+    ## 1  31 Outcome              50         No       30s      31-180 days
+    ## 2  52 Outcome               6         No       50s        0-30 days
+    ## 3  54  Stable               1         No       50s        0-30 days
+    ## 4  54 Outcome              15        Yes       50s        0-30 days
+    ## 5  40  Stable              36         No       40s      31-180 days
+    ## 6  40 Outcome               3        Yes       40s        0-30 days
+    ##   Outcome_Binary Transplant_Binary Predicted_Probability Predicted_Status
+    ## 1              1                 0             0.2384267           Stable
+    ## 2              1                 0             0.3352349           Stable
+    ## 3              0                 0             0.3458257           Stable
+    ## 4              1                 1             0.8351332          Outcome
+    ## 5              0                 0             0.2753630           Stable
+    ## 6              1                 1             0.8013179          Outcome
+
+``` r
+# accuracy
+model_accuracy <- mean(heart_model$Predicted_Status == heart_model$Status)
+model_accuracy
+```
+
+    ## [1] 0.7151163
+
+The model accuracy gives a simple check of how often the predicted
+status matches the actual status. This is a basic model evaluation step.
+A stronger project could use train/test split or cross-validation, but
+this simple version is enough to demonstrate the workflow clearly.
+
+------------------------------------------------------------------------
+
+### Predicted Outcome Probability by Age
+
+``` r
+# creating plot
+ggplot(heart_model, aes(x = Age, y = Predicted_Probability, color = Status)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(
+    title = "Predicted Probability of Clinical Outcome by Age",
+    x = "Patient Age",
+    y = "Predicted Probability of Outcome",
+    color = "Actual Status"
+  ) +
+  theme_minimal()
+```
+
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+This plot shows each patient’s predicted probability of clinical
+outcome. The points are colored by actual status, so we can visually
+compare the model prediction with the real outcome label.
+
+------------------------------------------------------------------------
+
+## Key Findings
+
+- Many patients in this dataset were middle-aged.
+
+- Outcome patterns were different across transplant status groups. Age
+  group and monitoring period comparisons made the patterns easier to
+  see.
+
+- The logistic regression model showed how a simple Healthcare IT
+  prediction workflow can be built in R.
+
+- The results should be interpreted carefully because this is a small
+  observational dataset.
+
+------------------------------------------------------------------------
+
+## Limitations
+
+- The dataset is small.
+
+- This is observational data, so it cannot prove cause and effect.
+
+- Only a few variables were used in this project.
+
+- The model is for learning and portfolio demonstration only.
+
+- The results should not be used for real medical decision-making.
+
+------------------------------------------------------------------------
+
+## Conclusion
+
+This project demonstrates a basic Healthcare IT analytics workflow using
+R. The workflow includes data cleaning, summary statistics, exploratory
+data analysis, grouped outcome comparison, and a simple logistic
+regression model. This makes the project stronger than a basic
+visualization-only project because it includes both descriptive analysis
+and basic predictive modeling.
