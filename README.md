@@ -270,7 +270,7 @@ summary_table
     ##   No_Transplant_Count
     ## 1                 103
 
-This summary table gives a quick overview of the patient group. It shows
+This summary table gives a brief overview of the patient group. It shows
 the number of patients, age range, average monitoring duration, outcome
 count, and transplant count.
 
@@ -290,10 +290,10 @@ ggplot(heart_clean, aes(x = Age)) +
 
 ![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
-The histogram shows that many patients in this dataset were middle-aged.
-This helps describe the patient group, but it should not be used to make
-broad medical conclusions because this dataset is small and specific to
-one heart transplant program.
+The histogram shows that many patients in this dataset are centered
+around middle-aged. This helps describe the patient group, but it should
+not be used to make broad medical conclusions because this dataset is
+small and specific to one heart transplant program.
 
 ------------------------------------------------------------------------
 
@@ -330,9 +330,9 @@ ggplot(outcome_by_transplant, aes(x = Transplant, y = Percent, fill = Status)) +
 ![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 This chart compares patient outcomes based on whether the patient
-received a transplant. This is useful for finding patterns in the data.
+received a transplant. This will help us to find patterns in the data.
 However, this is observational data, so the result shows association
-only. It does not prove that transplant status directly caused the
+only which does not prove that transplant status directly caused the
 outcome.
 
 ------------------------------------------------------------------------
@@ -389,9 +389,9 @@ ggplot(age_outcome, aes(x = Age_Group, y = Percent, fill = Status)) +
 ![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 This chart compares clinical outcomes across different age groups. It
-gives a clearer view than the age histogram alone because it connects
-age groups with final patient status. Some age groups may have small
-sample sizes, so the result should be interpreted carefully.
+gives a clearer view than the age histogram alone with its connection
+with final patient status. Some age groups may have small sample sizes,
+so the result should be interpreted carefully.
 
 ------------------------------------------------------------------------
 
@@ -473,9 +473,9 @@ grouped view of the same idea shown in the scatter plot.
 
 A logistic regression model was used to estimate the probability of a
 clinical outcome. The predictors were age, monitoring duration, and
-transplant status. This model is not intended for medical
-decision-making. It is only used to demonstrate a basic Healthcare IT
-analytics workflow.
+transplant status. This model is not intended for sepecific medical
+decision-making. It is only used to demonstrate a basic knowledge of
+Healthcare IT analytics workflow.
 
 ``` r
 # prepare model
@@ -579,11 +579,11 @@ compare the model prediction with the real outcome label.
 
 ## Key Findings
 
-- Many patients in this dataset were middle-aged.
+- Many patients in this dataset are centered around middle-aged.
 
 - Outcome patterns were different across transplant status groups. Age
   group and monitoring period comparisons made the patterns easier to
-  see.
+  understand.
 
 - The logistic regression model showed how a simple Healthcare IT
   prediction workflow can be built in R.
@@ -599,9 +599,7 @@ compare the model prediction with the real outcome label.
 
 - This is observational data, so it cannot prove cause and effect.
 
-- Only a few variables were used in this project.
-
-- The model is for learning and portfolio demonstration only.
+- Only a few key variables were used in this project.
 
 - The results should not be used for real medical decision-making.
 
